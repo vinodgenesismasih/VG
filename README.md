@@ -1,2 +1,0 @@
-Vinod_Genesys_bot
-8125572951:AAGu1jL0GOk2Qt5Rrbhhethj9RtaZLeBsQU"
