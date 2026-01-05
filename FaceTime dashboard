@@ -1,0 +1,1582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FaceTime Platform - AI Dashboard</title>
+    
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Charts -->
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    
+    <style>
+        :root {
+            /* FaceTime-inspired Colors */
+            --primary-blue: #007AFF;
+            --primary-dark: #0056CC;
+            --secondary-purple: #5856D6;
+            --accent-green: #34C759;
+            --accent-orange: #FF9500;
+            --accent-red: #FF3B30;
+            
+            /* Background Colors */
+            --bg-primary: #FFFFFF;
+            --bg-secondary: #F2F2F7;
+            --bg-tertiary: #E5E5EA;
+            --bg-card: #FFFFFF;
+            --bg-dark: #1C1C1E;
+            
+            /* Text Colors */
+            --text-primary: #000000;
+            --text-secondary: #3C3C43;
+            --text-muted: #8E8E93;
+            --text-light: #AEAEB2;
+            
+            /* Platform Colors */
+            --facebook: #1877F2;
+            --instagram: #E4405F;
+            --whatsapp: #25D366;
+            --twitter: #1DA1F2;
+            
+            /* Borders & Shadows */
+            --border-color: #C7C7CC;
+            --border-radius: 12px;
+            --sidebar-width: 280px;
+            --shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+            --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+            
+            /* Status Colors */
+            --online: #34C759;
+            --offline: #8E8E93;
+            --away: #FF9500;
+            --dnd: #FF3B30;
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #000000;
+            --bg-secondary: #1C1C1E;
+            --bg-tertiary: #2C2C2E;
+            --bg-card: #1C1C1E;
+            --text-primary: #FFFFFF;
+            --text-secondary: #EBEBF5;
+            --text-muted: #98989D;
+            --border-color: #38383A;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* FaceTime Background Animation */
+        .facetime-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+            background: linear-gradient(135deg, #007AFF20 0%, #5856D620 100%);
+        }
+
+        .bubble {
+            position: absolute;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, rgba(0, 122, 255, 0.1), transparent);
+            animation: float 20s infinite ease-in-out;
+        }
+
+        .bubble:nth-child(1) { width: 200px; height: 200px; top: 10%; left: 5%; animation-delay: 0s; }
+        .bubble:nth-child(2) { width: 150px; height: 150px; top: 60%; left: 80%; animation-delay: 5s; }
+        .bubble:nth-child(3) { width: 100px; height: 100px; top: 80%; left: 20%; animation-delay: 10s; }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-50px) rotate(180deg); }
+        }
+
+        /* Layout */
+        .dashboard-container {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        /* Glass Sidebar */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-right: 1px solid rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+        }
+
+        [data-theme="dark"] .sidebar {
+            background: rgba(28, 28, 30, 0.9);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar-header {
+            padding: 1.5rem 0;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        [data-theme="dark"] .sidebar-header {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .platform-logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--primary-blue), var(--secondary-purple));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.25rem;
+        }
+
+        .platform-name {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary-blue), var(--secondary-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .sidebar-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.875rem 1rem;
+            border-radius: 10px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .nav-item:hover {
+            background: rgba(0, 122, 255, 0.1);
+            color: var(--primary-blue);
+        }
+
+        .nav-item.active {
+            background: linear-gradient(135deg, var(--primary-blue), var(--secondary-purple));
+            color: white;
+            box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+        }
+
+        .nav-item i {
+            width: 20px;
+            text-align: center;
+            font-size: 1.1rem;
+        }
+
+        .nav-label {
+            font-weight: 500;
+            font-size: 0.9375rem;
+        }
+
+        .badge {
+            background: var(--accent-red);
+            color: white;
+            font-size: 0.75rem;
+            padding: 0.125rem 0.5rem;
+            border-radius: 10px;
+            margin-left: auto;
+        }
+
+        /* Quick Actions */
+        .quick-actions {
+            margin-top: 2rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        [data-theme="dark"] .quick-actions {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .quick-actions h4 {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            margin-bottom: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .action-btn {
+            width: 100%;
+            padding: 0.75rem;
+            border: none;
+            border-radius: 10px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-bottom: 0.5rem;
+        }
+
+        .action-btn:hover {
+            background: var(--primary-blue);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* User Profile */
+        .user-profile {
+            margin-top: auto;
+            padding-top: 1.5rem;
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        [data-theme="dark"] .user-profile {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .profile-card {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .profile-card:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .profile-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-blue), var(--secondary-purple));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 1.25rem;
+        }
+
+        .profile-info {
+            flex: 1;
+        }
+
+        .profile-name {
+            font-weight: 600;
+            font-size: 0.9375rem;
+        }
+
+        .profile-status {
+            font-size: 0.8125rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--online);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: var(--sidebar-width);
+            padding: 2rem;
+        }
+
+        /* Top Bar */
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            background: var(--bg-card);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .page-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+        .page-subtitle {
+            color: var(--text-muted);
+            font-size: 0.9375rem;
+        }
+
+        .top-controls {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .search-box {
+            position: relative;
+            width: 280px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 0.75rem 1rem 0.75rem 3rem;
+            border: 1px solid var(--border-color);
+            border-radius: 25px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 0.9375rem;
+            transition: all 0.2s ease;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+        }
+
+        .control-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .control-btn:hover {
+            background: var(--primary-blue);
+            color: white;
+            border-color: var(--primary-blue);
+            transform: translateY(-2px);
+        }
+
+        /* Home Content */
+        .welcome-card {
+            background: linear-gradient(135deg, var(--primary-blue), var(--secondary-purple));
+            border-radius: var(--border-radius);
+            padding: 3rem;
+            color: white;
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .welcome-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M0,0 L100,0 L100,100 Z" fill="rgba(255,255,255,0.1)"/></svg>');
+            background-size: cover;
+        }
+
+        .welcome-content h2 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            font-weight: 700;
+        }
+
+        .welcome-content p {
+            font-size: 1.125rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin-bottom: 2rem;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .stat-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        .icon-blue { background: rgba(0, 122, 255, 0.1); color: var(--primary-blue); }
+        .icon-purple { background: rgba(88, 86, 214, 0.1); color: var(--secondary-purple); }
+        .icon-green { background: rgba(52, 199, 89, 0.1); color: var(--accent-green); }
+        .icon-orange { background: rgba(255, 149, 0, 0.1); color: var(--accent-orange); }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+
+        /* Social Platform Grid */
+        .platform-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .platform-item {
+            background: var(--bg-card);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            border: 1px solid var(--border-color);
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .platform-item:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow);
+        }
+
+        .platform-logo-circle {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.25rem;
+        }
+
+        .facebook-bg { background: var(--facebook); }
+        .instagram-bg { background: var(--instagram); }
+        .whatsapp-bg { background: var(--whatsapp); }
+        .twitter-bg { background: var(--twitter); }
+
+        .platform-stats {
+            text-align: right;
+            margin-left: auto;
+        }
+
+        /* Games Section */
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .game-card {
+            background: var(--bg-card);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        .game-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .game-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .game-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--primary-blue), var(--secondary-purple));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.25rem;
+        }
+
+        /* API Section */
+        .api-container {
+            background: var(--bg-card);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .api-endpoints {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .endpoint-card {
+            background: var(--bg-secondary);
+            border-radius: 10px;
+            padding: 1.5rem;
+            border-left: 4px solid var(--primary-blue);
+        }
+
+        /* Generation Creators */
+        .generator-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .generator-card {
+            background: var(--bg-card);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        .generator-card:hover {
+            border-color: var(--primary-blue);
+            box-shadow: var(--shadow);
+        }
+
+        /* Messages Interface */
+        .messages-container {
+            background: var(--bg-card);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+
+        .chat-container {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            height: 600px;
+        }
+
+        .conversation-list {
+            border-right: 1px solid var(--border-color);
+            overflow-y: auto;
+        }
+
+        .conversation-item {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .conversation-item:hover {
+            background: var(--bg-secondary);
+        }
+
+        .conversation-item.active {
+            background: rgba(0, 122, 255, 0.1);
+        }
+
+        /* Monetization */
+        .monetization-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .revenue-card {
+            background: linear-gradient(135deg, #34C759, #4CD964);
+            color: white;
+            border-radius: var(--border-radius);
+            padding: 2rem;
+        }
+
+        /* Apps Section */
+        .apps-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .app-card {
+            background: var(--bg-card);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            text-align: center;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        .app-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            border: none;
+            font-weight: 500;
+            font-size: 0.9375rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-blue), var(--secondary-purple));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+        }
+
+        .btn-secondary {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-tertiary);
+        }
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 0.9375rem;
+            transition: all 0.2s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+        }
+
+        /* Mobile Menu */
+        .mobile-menu-btn {
+            display: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--primary-blue), var(--secondary-purple));
+            color: white;
+            border: none;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .sidebar {
+                transform: translateX(-100%);
+                z-index: 1001;
+            }
+            
+            .sidebar.active {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: 0;
+                padding: 1.5rem;
+            }
+            
+            .mobile-menu-btn {
+                display: flex;
+            }
+            
+            .search-box {
+                width: 200px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                padding: 1rem;
+            }
+            
+            .top-bar {
+                flex-direction: column;
+                gap: 1rem;
+                padding: 1rem;
+            }
+            
+            .page-title {
+                font-size: 1.5rem;
+            }
+            
+            .search-box {
+                width: 100%;
+            }
+            
+            .stats-grid,
+            .platform-grid,
+            .games-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .chat-container {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+            
+            .conversation-list {
+                border-right: none;
+                border-bottom: 1px solid var(--border-color);
+                max-height: 300px;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-muted);
+        }
+    </style>
+</head>
+<body>
+    <!-- FaceTime Background -->
+    <div class="facetime-background">
+        <div class="bubble"></div>
+        <div class="bubble"></div>
+        <div class="bubble"></div>
+    </div>
+
+    <div class="dashboard-container">
+        <!-- Glass Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="platform-logo">
+                    <div class="logo-icon">
+                        <i class="fas fa-video"></i>
+                    </div>
+                    <div class="platform-name">FaceTime</div>
+                </div>
+                <p style="color: var(--text-muted); font-size: 0.875rem;">AI-Powered Communication Platform</p>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="#home" class="nav-item active" onclick="switchTab('home')">
+                    <i class="fas fa-home"></i>
+                    <span class="nav-label">Home</span>
+                </a>
+                <a href="#profile" class="nav-item" onclick="switchTab('profile')">
+                    <i class="fas fa-user-circle"></i>
+                    <span class="nav-label">Profile</span>
+                </a>
+                <a href="#create-story" class="nav-item" onclick="switchTab('create-story')">
+                    <i class="fas fa-plus-square"></i>
+                    <span class="nav-label">Create Story</span>
+                </a>
+                <a href="#messages" class="nav-item" onclick="switchTab('messages')">
+                    <i class="fas fa-comments"></i>
+                    <span class="nav-label">Messages</span>
+                    <span class="badge">12</span>
+                </a>
+                <a href="#settings" class="nav-item" onclick="switchTab('settings')">
+                    <i class="fas fa-cog"></i>
+                    <span class="nav-label">Settings</span>
+                </a>
+                <a href="#games" class="nav-item" onclick="switchTab('games')">
+                    <i class="fas fa-gamepad"></i>
+                    <span class="nav-label">Games</span>
+                </a>
+                <a href="#platform-api" class="nav-item" onclick="switchTab('platform-api')">
+                    <i class="fas fa-code"></i>
+                    <span class="nav-label">Platform API</span>
+                </a>
+                <a href="#generation-creators" class="nav-item" onclick="switchTab('generation-creators')">
+                    <i class="fas fa-robot"></i>
+                    <span class="nav-label">Generation Creators</span>
+                </a>
+                <a href="#api-search" class="nav-item" onclick="switchTab('api-search')">
+                    <i class="fas fa-search"></i>
+                    <span class="nav-label">API Searching</span>
+                </a>
+                <a href="#apps-new" class="nav-item" onclick="switchTab('apps-new')">
+                    <i class="fas fa-mobile-alt"></i>
+                    <span class="nav-label">Apps New</span>
+                </a>
+                <a href="#monetization" class="nav-item" onclick="switchTab('monetization')">
+                    <i class="fas fa-coins"></i>
+                    <span class="nav-label">Monetization</span>
+                </a>
+                <a href="#suggestions" class="nav-item" onclick="switchTab('suggestions')">
+                    <i class="fas fa-lightbulb"></i>
+                    <span class="nav-label">New Suggestions</span>
+                </a>
+                <a href="#notifications" class="nav-item" onclick="switchTab('notifications')">
+                    <i class="fas fa-bell"></i>
+                    <span class="nav-label">Notifications</span>
+                    <span class="badge">3</span>
+                </a>
+            </nav>
+
+            <!-- Social Media Quick Access -->
+            <div class="quick-actions">
+                <h4>Social Platforms</h4>
+                <button class="action-btn" onclick="openPlatform('facebook')">
+                    <i class="fab fa-facebook" style="color: var(--facebook);"></i>
+                    <span>Facebook</span>
+                </button>
+                <button class="action-btn" onclick="openPlatform('instagram')">
+                    <i class="fab fa-instagram" style="color: var(--instagram);"></i>
+                    <span>Instagram</span>
+                </button>
+                <button class="action-btn" onclick="openPlatform('whatsapp')">
+                    <i class="fab fa-whatsapp" style="color: var(--whatsapp);"></i>
+                    <span>WhatsApp</span>
+                </button>
+            </div>
+
+            <!-- User Profile -->
+            <div class="user-profile">
+                <div class="profile-card" onclick="openProfile()">
+                    <div class="profile-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="profile-info">
+                        <div class="profile-name">Alex Johnson</div>
+                        <div class="profile-status">
+                            <span class="status-dot"></span>
+                            Online
+                        </div>
+                    </div>
+                    <i class="fas fa-chevron-right"></i>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Top Bar -->
+            <div class="top-bar">
+                <button class="mobile-menu-btn" id="mobileMenuBtn" onclick="toggleSidebar()">
+                    <i class="fas fa-bars"></i>
+                </button>
+                
+                <div>
+                    <h1 class="page-title" id="pageTitle">FaceTime Dashboard</h1>
+                    <p class="page-subtitle" id="pageSubtitle">Welcome to your AI communication platform</p>
+                </div>
+                
+                <div class="top-controls">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" placeholder="Search across platforms..." id="searchInput" onkeyup="searchContent(this.value)">
+                    </div>
+                    
+                    <button class="control-btn" onclick="refreshData()">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                    
+                    <button class="control-btn" onclick="toggleTheme()">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Home Tab -->
+            <div id="home" class="tab-content active">
+                <div class="welcome-card">
+                    <div class="welcome-content">
+                        <h2>Welcome to FaceTime AI</h2>
+                        <p>Experience the future of communication with AI-powered video calls, smart messaging, and multi-platform integration.</p>
+                        <button class="btn btn-primary">
+                            <i class="fas fa-video"></i>
+                            Start Video Call
+                        </button>
+                    </div>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon icon-blue">
+                                <i class="fas fa-video"></i>
+                            </div>
+                            <div>
+                                <div class="stat-value">1,247</div>
+                                <div class="stat-label">Active Calls</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon icon-purple">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div>
+                                <div class="stat-value">48.5K</div>
+                                <div class="stat-label">Active Users</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon icon-green">
+                                <i class="fas fa-comments"></i>
+                            </div>
+                            <div>
+                                <div class="stat-value">24.8K</div>
+                                <div class="stat-label">Messages Today</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon icon-orange">
+                                <i class="fas fa-coins"></i>
+                            </div>
+                            <div>
+                                <div class="stat-value">$8,457</div>
+                                <div class="stat-label">Revenue Today</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Social Platform Integration -->
+                <div class="platform-grid">
+                    <div class="platform-item" onclick="openPlatform('facebook')">
+                        <div class="platform-logo-circle facebook-bg">
+                            <i class="fab fa-facebook-f"></i>
+                        </div>
+                        <div>
+                            <h3>Facebook</h3>
+                            <p>Integrated Posts</p>
+                        </div>
+                        <div class="platform-stats">
+                            <div class="stat-value">12.5K</div>
+                            <div class="stat-label">Posts</div>
+                        </div>
+                    </div>
+                    
+                    <div class="platform-item" onclick="openPlatform('instagram')">
+                        <div class="platform-logo-circle instagram-bg">
+                            <i class="fab fa-instagram"></i>
+                        </div>
+                        <div>
+                            <h3>Instagram</h3>
+                            <p>Stories & Reels</p>
+                        </div>
+                        <div class="platform-stats">
+                            <div class="stat-value">8.7K</div>
+                            <div class="stat-label">Stories</div>
+                        </div>
+                    </div>
+                    
+                    <div class="platform-item" onclick="openPlatform('whatsapp')">
+                        <div class="platform-logo-circle whatsapp-bg">
+                            <i class="fab fa-whatsapp"></i>
+                        </div>
+                        <div>
+                            <h3>WhatsApp</h3>
+                            <p>Messages & Calls</p>
+                        </div>
+                        <div class="platform-stats">
+                            <div class="stat-value">24.2K</div>
+                            <div class="stat-label">Messages</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Games Tab -->
+            <div id="games" class="tab-content" style="display: none;">
+                <div class="games-grid">
+                    <div class="game-card">
+                        <div class="game-header">
+                            <div class="game-icon">
+                                <i class="fas fa-gamepad"></i>
+                            </div>
+                            <div>
+                                <h3>AI Trivia Challenge</h3>
+                                <p style="color: var(--text-muted);">Test your knowledge with AI-generated questions</p>
+                            </div>
+                        </div>
+                        <div style="padding: 1.5rem;">
+                            <button class="btn btn-primary" style="width: 100%;">
+                                <i class="fas fa-play"></i>
+                                Play Now
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="game-card">
+                        <div class="game-header">
+                            <div class="game-icon">
+                                <i class="fas fa-chess"></i>
+                            </div>
+                            <div>
+                                <h3>FaceTime Chess</h3>
+                                <p style="color: var(--text-muted);">Play chess with video chat</p>
+                            </div>
+                        </div>
+                        <div style="padding: 1.5rem;">
+                            <button class="btn btn-primary" style="width: 100%;">
+                                <i class="fas fa-play"></i>
+                                Start Game
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Platform API Tab -->
+            <div id="platform-api" class="tab-content" style="display: none;">
+                <div class="api-container">
+                    <h2 style="margin-bottom: 1rem;">FaceTime Platform API</h2>
+                    <p style="color: var(--text-muted); margin-bottom: 2rem;">Access our powerful API for video calls, messaging, and AI features</p>
+                    
+                    <div class="api-endpoints">
+                        <div class="endpoint-card">
+                            <h4>Video Call API</h4>
+                            <code style="color: var(--primary-blue); display: block; margin: 0.5rem 0;">POST /api/v1/calls/create</code>
+                            <p style="color: var(--text-muted); font-size: 0.875rem;">Initiate video calls with AI enhancements</p>
+                        </div>
+                        
+                        <div class="endpoint-card">
+                            <h4>Messaging API</h4>
+                            <code style="color: var(--primary-blue); display: block; margin: 0.5rem 0;">POST /api/v1/messages/send</code>
+                            <p style="color: var(--text-muted); font-size: 0.875rem;">Send AI-enhanced messages</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Generation Creators Tab -->
+            <div id="generation-creators" class="tab-content" style="display: none;">
+                <div class="generator-grid">
+                    <div class="generator-card">
+                        <h3 style="margin-bottom: 1rem;">AI Video Generator</h3>
+                        <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Create custom videos with AI</p>
+                        <button class="btn btn-primary">
+                            <i class="fas fa-video"></i>
+                            Generate Video
+                        </button>
+                    </div>
+                    
+                    <div class="generator-card">
+                        <h3 style="margin-bottom: 1rem;">AI Story Creator</h3>
+                        <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Write stories with AI assistance</p>
+                        <button class="btn btn-primary">
+                            <i class="fas fa-feather"></i>
+                            Create Story
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Messages Tab -->
+            <div id="messages" class="tab-content" style="display: none;">
+                <div class="messages-container">
+                    <div class="chat-container">
+                        <div class="conversation-list">
+                            <div class="conversation-item active">
+                                <div class="profile-avatar" style="width: 40px; height: 40px;">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <div>
+                                    <h4>Sarah Miller</h4>
+                                    <p style="color: var(--text-muted); font-size: 0.875rem;">Hey, are you available for a call?</p>
+                                </div>
+                            </div>
+                            
+                            <div class="conversation-item">
+                                <div class="profile-avatar" style="width: 40px; height: 40px;">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <div>
+                                    <h4>John Doe</h4>
+                                    <p style="color: var(--text-muted); font-size: 0.875rem;">Meeting at 3 PM tomorrow</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div style="padding: 2rem;">
+                            <h3 style="margin-bottom: 1.5rem;">Chat with Sarah</h3>
+                            <div class="form-group">
+                                <textarea class="form-control" rows="4" placeholder="Type your message..."></textarea>
+                            </div>
+                            <button class="btn btn-primary">
+                                <i class="fas fa-paper-plane"></i>
+                                Send Message
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Monetization Tab -->
+            <div id="monetization" class="tab-content" style="display: none;">
+                <div class="monetization-grid">
+                    <div class="revenue-card">
+                        <h3 style="margin-bottom: 1rem;">Total Revenue</h3>
+                        <div class="stat-value" style="font-size: 3rem;">$48,562</div>
+                        <p>This month</p>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <h3 style="margin-bottom: 1rem;">Revenue Sources</h3>
+                        <div style="margin-top: 1rem;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                <span>Video Calls</span>
+                                <span>$24,281</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                <span>Premium Features</span>
+                                <span>$12,140</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span>API Usage</span>
+                                <span>$12,141</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Apps Section -->
+            <div id="apps-new" class="tab-content" style="display: none;">
+                <div class="apps-grid">
+                    <div class="app-card">
+                        <div class="stat-icon icon-blue" style="margin: 0 auto 1rem;">
+                            <i class="fas fa-mobile-alt"></i>
+                        </div>
+                        <h3>FaceTime Mobile</h3>
+                        <p style="color: var(--text-muted); margin: 0.5rem 0;">iOS & Android App</p>
+                        <button class="btn btn-secondary">
+                            <i class="fas fa-download"></i>
+                            Download
+                        </button>
+                    </div>
+                    
+                    <div class="app-card">
+                        <div class="stat-icon icon-purple" style="margin: 0 auto 1rem;">
+                            <i class="fas fa-desktop"></i>
+                        </div>
+                        <h3>Desktop App</h3>
+                        <p style="color: var(--text-muted); margin: 0.5rem 0;">Windows & macOS</p>
+                        <button class="btn btn-secondary">
+                            <i class="fas fa-download"></i>
+                            Download
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notifications Tab -->
+            <div id="notifications" class="tab-content" style="display: none;">
+                <div class="messages-container">
+                    <div style="padding: 2rem;">
+                        <h3 style="margin-bottom: 1.5rem;">Recent Notifications</h3>
+                        <div style="display: flex; flex-direction: column; gap: 1rem;">
+                            <div style="padding: 1rem; background: var(--bg-secondary); border-radius: 10px;">
+                                <div style="display: flex; align-items: center; gap: 1rem;">
+                                    <div class="stat-icon icon-blue">
+                                        <i class="fas fa-video"></i>
+                                    </div>
+                                    <div>
+                                        <h4>New Video Call</h4>
+                                        <p style="color: var(--text-muted);">Sarah wants to video call</p>
+                                    </div>
+                                    <span style="color: var(--text-muted); margin-left: auto; font-size: 0.875rem;">2 min ago</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeDashboard();
+            updateTime();
+            checkNotifications();
+        });
+
+        // Dashboard functions
+        function initializeDashboard() {
+            // Check for saved theme
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            
+            // Update theme icon
+            updateThemeIcon(savedTheme);
+            
+            // Initialize any charts
+            initializeCharts();
+        }
+
+        function switchTab(tabId) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.style.display = 'none';
+            });
+            
+            // Remove active class from all nav items
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // Show selected tab
+            const tab = document.getElementById(tabId);
+            if (tab) {
+                tab.style.display = 'block';
+                tab.classList.add('fade-in');
+            }
+            
+            // Add active class to clicked nav item
+            const navItem = document.querySelector(`.nav-item[href="#${tabId}"]`);
+            if (navItem) {
+                navItem.classList.add('active');
+            }
+            
+            // Update page title
+            updatePageTitle(tabId);
+            
+            // Close mobile sidebar if open
+            if (window.innerWidth < 1200) {
+                document.getElementById('sidebar').classList.remove('active');
+            }
+        }
+
+        function updatePageTitle(tabId) {
+            const titles = {
+                'home': 'FaceTime Dashboard',
+                'profile': 'User Profile',
+                'create-story': 'Create Story',
+                'messages': 'Messages',
+                'settings': 'Settings',
+                'games': 'Games',
+                'platform-api': 'Platform API',
+                'generation-creators': 'Generation Creators',
+                'api-search': 'API Search',
+                'apps-new': 'New Apps',
+                'monetization': 'Monetization',
+                'suggestions': 'Suggestions',
+                'notifications': 'Notifications'
+            };
+            
+            const subtitles = {
+                'home': 'Welcome to your AI communication platform',
+                'profile': 'Manage your profile and settings',
+                'create-story': 'Create and share stories',
+                'messages': 'Chat and video calls',
+                'settings': 'Configure your preferences',
+                'games': 'Play interactive games',
+                'platform-api': 'Access API documentation',
+                'generation-creators': 'AI content generation tools',
+                'api-search': 'Search API endpoints',
+                'apps-new': 'Download new applications',
+                'monetization': 'Revenue and earnings',
+                'suggestions': 'Feature suggestions',
+                'notifications': 'Recent notifications'
+            };
+            
+            document.getElementById('pageTitle').textContent = titles[tabId] || 'FaceTime';
+            document.getElementById('pageSubtitle').textContent = subtitles[tabId] || 'AI Communication Platform';
+        }
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('active');
+        }
+
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            
+            updateThemeIcon(newTheme);
+        }
+
+        function updateThemeIcon(theme) {
+            const themeBtn = document.querySelector('[onclick="toggleTheme()"] i');
+            if (theme === 'dark') {
+                themeBtn.className = 'fas fa-sun';
+            } else {
+                themeBtn.className = 'fas fa-moon';
+            }
+        }
+
+        function refreshData() {
+            const refreshBtn = document.querySelector('[onclick="refreshData()"]');
+            const originalIcon = refreshBtn.innerHTML;
+            refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            
+            setTimeout(() => {
+                refreshBtn.innerHTML = originalIcon;
+                
+                // Update stats with random values for demo
+                updateRandomStats();
+                
+                showNotification('Data refreshed successfully!', 'success');
+            }, 1000);
+        }
+
+        function updateRandomStats() {
+            const statValues = document.querySelectorAll('.stat-value');
+            statValues.forEach(stat => {
+                if (stat.textContent.includes('$') || !isNaN(stat.textContent.replace(/[^0-9]/g, ''))) {
+                    const current = parseInt(stat.textContent.replace(/[^0-9]/g, ''));
+                    const change = Math.floor(Math.random() * 200) - 50;
+                    const newValue = Math.max(100, current + change);
+                    
+                    if (stat.textContent.includes('$')) {
+                        stat.textContent = '$' + newValue.toLocaleString();
+                    } else {
+                        stat.textContent = newValue.toLocaleString();
+                    }
+                }
+            });
+        }
+
+        function searchContent(query) {
+            if (query.length > 2) {
+                console.log('Searching for:', query);
+                // Implement actual search logic here
+            }
+        }
+
+        function openPlatform(platform) {
+            const urls = {
+                'facebook': 'https://facebook.com',
+                'instagram': 'https://instagram.com',
+                'whatsapp': 'https://web.whatsapp.com'
+            };
+            
+            if (urls[platform]) {
+                window.open(urls[platform], '_blank');
+            }
+        }
+
+        function openProfile() {
+            switchTab('profile');
+        }
+
+        function checkNotifications() {
+            // Simulate checking for notifications
+            setTimeout(() => {
+                const badge = document.querySelector('.nav-item[href="#notifications"] .badge');
+                if (badge) {
+                    const count = parseInt(badge.textContent);
+                    if (count > 0) {
+                        badge.style.animation = 'pulse 2s infinite';
+                    }
+                }
+            }, 2000);
+        }
+
+        function showNotification(message, type = 'info') {
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${type === 'success' ? '#34C759' : type === 'error' ? '#FF3B30' : '#007AFF'};
+                color: white;
+                padding: 1rem 1.5rem;
+                border-radius: 10px;
+                box-shadow: var(--shadow-lg);
+                z-index: 10000;
+                animation: slideIn 0.3s ease;
+            `;
+            
+            notification.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        function updateTime() {
+            const now = new Date();
+            // Update any time displays if needed
+            setTimeout(updateTime, 60000);
+        }
+
+        function initializeCharts() {
+            // Initialize ApexCharts if needed
+            // This is where you'd set up your charts
+        }
+
+        // Add CSS animations
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            
+            @keyframes slideOut {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+            
+            @keyframes pulse {
+                0%, 100% { transform: scale(1); opacity: 1; }
+                50% { transform: scale(1.1); opacity: 0.8; }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>
