@@ -1,2 +1,2 @@
-# In .env file (if using environment variables)
+Vinod_Genesys_bot
 VG_BOT_TOKEN="8125572951:AAGu1jL0GOk2Qt5Rrbhhethj9RtaZLeBsQU"
